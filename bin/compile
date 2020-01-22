@@ -104,8 +104,9 @@ if [ ! -f $CACHE_DIR/PURGED_CACHE_V1 ]; then
 fi
 
 topic "Installing Google Chrome from the $channel channel."
-
-PACKAGES="$PACKAGES https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb"
+# remove previous package list, deps should have been installed previously by apt, only chrome is needed
+# PACKAGES="$PACKAGES https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb"
+PACKAGES="https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb"
 
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
@@ -118,27 +119,25 @@ APT_OPTIONS="-o debug::nolocking=true -o dir::cache=$APT_CACHE_DIR -o dir::state
 topic "Updating apt caches"
 apt-get $APT_OPTIONS update | indent
 
-# for PACKAGE in $PACKAGES; do
-#   if [[ $PACKAGE == *deb ]]; then
-#     PACKAGE_NAME=$(basename $PACKAGE .deb)
-#     PACKAGE_FILE=$APT_CACHE_DIR/archives/$PACKAGE_NAME.deb
-#
-#     topic "Fetching $PACKAGE"
-#     curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
-#   else
-#     topic "Fetching .debs for $PACKAGE"
-#     apt-get $APT_OPTIONS -y --force-yes -d install --reinstall $PACKAGE | indent
-#   fi
-# done
-#
-# mkdir -p $BUILD_DIR/.apt
-#
-# for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
-#   topic "Installing $(basename $DEB)"
-#   dpkg -x $DEB $BUILD_DIR/.apt/
-# done
+for PACKAGE in $PACKAGES; do
+  if [[ $PACKAGE == *deb ]]; then
+    PACKAGE_NAME=$(basename $PACKAGE .deb)
+    PACKAGE_FILE=$APT_CACHE_DIR/archives/$PACKAGE_NAME.deb
 
-# removing the dependencies installation since they are supposed to be installed by the apt buildpack
+    topic "Fetching $PACKAGE"
+    curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
+  else
+    topic "Fetching .debs for $PACKAGE"
+    apt-get $APT_OPTIONS -y --force-yes -d install --reinstall $PACKAGE | indent
+  fi
+done
+
+mkdir -p $BUILD_DIR/.apt
+
+for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
+  topic "Installing $(basename $DEB)"
+  dpkg -x $DEB $BUILD_DIR/.apt/
+done
 
 topic "Writing profile script"
 mkdir -p $BUILD_DIR/.profile.d
