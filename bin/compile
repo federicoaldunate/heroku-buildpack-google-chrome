@@ -107,8 +107,9 @@ if [ ! -f $CACHE_DIR/PURGED_CACHE_V1 ]; then
 fi
 
 topic "Installing Google Chrome from the $channel channel."
-
-PACKAGES="$PACKAGES https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb"
+# remove previous package list, deps should have been installed previously by apt, only chrome is needed
+# PACKAGES="$PACKAGES https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb"
+PACKAGES="https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb"
 
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
@@ -136,7 +137,7 @@ done
 
 mkdir -p $BUILD_DIR/.apt
 
-for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
+for DEB in $(ls -1 $APT_CACHE_DIR/archives/google-chrome*.deb); do
   topic "Installing $(basename $DEB)"
   dpkg -x $DEB $BUILD_DIR/.apt/
 done
